@@ -262,17 +262,16 @@ FROM pg_settings
 WHERE name = 'shared_buffers';
 ```
 ### ผลการทดลอง
+1.รูปผลการรันคำสั่ง
 
 <img width="699" height="304" alt="image" src="https://github.com/user-attachments/assets/6de28ec4-84eb-4b27-9974-89726839d2fa" />
 
-1.รูปผลการรันคำสั่ง
-
-<img width="326" height="122" alt="image" src="https://github.com/user-attachments/assets/b47acf93-d28c-4886-9971-9a2dc4b0933a" />
-
 2. ค่า  shared_buffers มีการกำหนดค่าไว้เท่าไหร่ (ใช้ setting X unit)
+
 (16384 x 8KB)
 
 3. ค่า  pending_restart ในผลการทดลองมีค่าเป็นอย่างไร และมีความหมายอย่างไร
+
 pending_restart = f → ไม่ต้อง restart ตอนนี้
 
 -- คำนวณและตั้งค่าใหม่
