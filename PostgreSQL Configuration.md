@@ -1,4 +1,4 @@
-# Lab 02: PostgreSQL Configuration and Memory Management
+<img width="485" height="609" alt="image" src="https://github.com/user-attachments/assets/ef39fece-5609-47cc-af6a-0a779704d89b" /># Lab 02: PostgreSQL Configuration and Memory Management
 
 ## วัตถุประสงค์
 1. เรียนรู้การกำหนดค่า PostgreSQL สำหรับการปรับประสิทธิภาพ
@@ -287,11 +287,16 @@ WHERE name = 'shared_buffers';
 ```
 -- ออกจาก postgres prompt (กด \q แล้ว enter) ทำการ Restart PostgreSQL ด้วยคำสั่ง แล้ว run docker อีกครั้ง หรือใช้วิธีการ stop และ run containner
 docker exec -it -u postgres postgres-config pg_ctl restart -D /var/lib/postgresql/data -m fast
-
-### ผลการทดลอง
 ```
+### ผลการทดลอง
+
 รูปผลการเปลี่ยนแปลงค่า pending_restart
+
+<img width="675" height="335" alt="image" src="https://github.com/user-attachments/assets/44cb72c6-8a3c-4fd8-8cf3-3ec42bd3799c" />
+
 รูปหลังจาก restart postgres
+
+<img width="1094" height="75" alt="image" src="https://github.com/user-attachments/assets/b8d00650-bd4c-4004-a3c2-5344ee7653ee" />
 
 ```
 
@@ -314,9 +319,8 @@ FROM pg_settings
 WHERE name = 'work_mem';
 ```
 ### ผลการทดลอง
-```
 รูปผลการเปลี่ยนแปลงค่า work_mem
-```
+<img width="485" height="609" alt="image" src="https://github.com/user-attachments/assets/5bf8d608-48c8-4a66-ad05-ad42f8c480e3" />
 
 #### 3.3 ปรับแต่ง Maintenance Work Memory
 ```sql
@@ -331,9 +335,9 @@ SELECT pg_reload_conf();
 SHOW maintenance_work_mem;
 ```
 ### ผลการทดลอง
-```
+
 รูปผลการเปลี่ยนแปลงค่า maintenance_work_mem
-```
+<img width="608" height="435" alt="image" src="https://github.com/user-attachments/assets/9e06776a-6e83-46c0-93b8-f494821878d3" />
 
 #### 3.4 ปรับแต่ง WAL Buffers
 ```sql
@@ -356,9 +360,9 @@ docker exec -it postgres-config psql -U postgres
 SHOW wal_buffers;
 ```
 ### ผลการทดลอง
-```
+
 รูปผลการเปลี่ยนแปลงค่า wal_buffers
-```
+<img width="1029" height="818" alt="image" src="https://github.com/user-attachments/assets/acf87ccb-1f5d-46bf-a4f4-238397fe5fdd" />
 
 #### 3.5 ปรับแต่ง Effective Cache Size
 ```sql
@@ -373,9 +377,9 @@ SELECT pg_reload_conf();
 SHOW effective_cache_size;
 ```
 ### ผลการทดลอง
-```
+
 รูปผลการเปลี่ยนแปลงค่า effective_cache_size
-```
+<img width="558" height="422" alt="image" src="https://github.com/user-attachments/assets/93f0b289-a101-43b4-8a98-75082a7649d5" />
 
 ### Step 4: ตรวจสอบผล
 
