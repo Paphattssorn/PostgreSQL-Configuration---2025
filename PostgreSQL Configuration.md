@@ -1658,9 +1658,50 @@ Estimated Usage = 2GB + (32MB × 100 × 0.5) + 512MB + 64MB
 
 ## คำถามท้ายการทดลอง
 1. หน่วยความจำใดบ้างที่เป็น shared memory และมีหลักในการตั้งค่าอย่างไร
+
+-เป็น shared (ใช้ร่วมกันทั้งเซิร์ฟเวอร์/ทุกเซสชัน):
+shared_buffers: บัฟเฟอร์หลักเก็บหน้า (pages) ของตาราง/ดัชนี
+แนวทาง: ~25–40% ของ RAM (เริ่มที่ 25% พอ)
+wal_buffers: บัฟเฟอร์สำหรับ WAL ก่อนเขียนลงดิสก์
+แนวทาง: ปล่อย -1 ให้ PostgreSQL auto (จะคำนวณจาก shared_buffers) หรือระบุ 16–64MB ก็พอ
+โครงสร้าง shared อื่น ๆ (เล็กเมื่อเทียบสองตัวบน) เช่น lock table, proc arrays ฯลฯ → ไม่ต้องจูนเอง
+ไม่ใช่ shared: work_mem, maintenance_work_mem, temp_buffers (เป็นต่อ-แบ็กเอนด์/ต่อการดำเนินการ)
+
 2. Work memory และ maintenance work memory คืออะไร มีหลักการในการกำหนดค่าอย่างไร
+
+-work_mem: เพดาน RAM ต่อการดำเนินการหนึ่งครั้งต่อคิวรีต่อแบ็กเอนด์ (เช่น sort, hash join/agg)
+1 คิวรีอาจใช้หลายก้อน (เช่น 2–4 งาน sort/hash) → ใช้หลายเท่าของ work_mem ได้
+ตั้งมากไป = เสี่ยงกิน RAM ทะลุ ถ้า concurrent เยอะ
+ตั้งน้อยไป = เกิด temp files (spill ลงดิสก์) ช้า
+-แนวทาง: คำนวณจาก จำนวนงานพร้อมกันจริง × ops ต่อคิวรี แล้วถอยเผื่อ
+maintenance_work_mem: เพดาน RAM สำหรับงานบำรุงรักษา (VACUUM, CREATE INDEX, REINDEX, ALTER TABLE … ADD INDEX) ต่อหนึ่งงาน
+ตั้งสูงช่วยให้ VACUUM/สร้างดัชนีเร็วขึ้น
+ระวังถ้า autovacuum มีหลาย worker จะคูณกัน
+
 3. หากมี RAM 16GB และต้องการกำหนด connection = 200 ควรกำหนดค่า work memory และ maintenance work memory อย่างไร
+
+สมมติ OLTP ทั่วไป มีคิวรีพร้อมกัน ~25% ของ connections ⇒ 50 แบ็กเอนด์ active
+สมมติคิวรีเฉลี่ยกิน 2 งาน sort/hash ต่อคิวรี
+-ตั้ง baseline:
+  shared_buffers: 4GB (25%)
+  wal_buffers: -1 (auto) หรือ 64MB
+  maintenance_work_mem: 1GB (ระวัง autovacuum_max_workers ค่าเดิม=3 ⇒ อาจใช้ ~3GB ถ้าทำพร้อมกัน)
+  effective_cache_size: 12GB (≈75% ของ RAM) – เพื่อช่วย planner
+-คำนวณงบ RAM สำหรับ work_mem (งบใช้งานรวมควร ≤ ~75% RAM = 12GB):
+  งบ ≈ 12GB − 4GB (shared) − 1GB (maintenance เผื่อ) − 0.064GB (wal) ≈ ~6.9GB
+  แบ่งให้ 50 แบ็กเอนด์ × 2 งานต่อคิวรี = 100 ก้อน ⇒ ~69MB/ก้อน
+
 4. ไฟล์ postgresql.conf และ postgresql.auto.conf  มีความสัมพันธ์กันอย่างไร
+
+-postgresql.conf: ไฟล์คอนฟิกหลัก (แก้ด้วยมือ)
+-postgresql.auto.conf: ไฟล์ที่ PostgreSQLเขียนเองเมื่อคุณสั่ง ALTER SYSTEM SET ...
+-ลำดับความสำคัญ: ค่าที่อยู่ใน postgresql.auto.conf “ชนะ” postgresql.conf
+-ที่ตั้ง: ปกติอยู่ใน data directory เดียวกัน
+-แก้ไขด้วยมือได้ แต่ แนวทางที่ถูก คือใช้ ALTER SYSTEM (แล้ว SELECT pg_reload_conf(); หรือ restart ถ้าพารามิเตอร์ต้องรีสตาร์ท)
+
 5. Buffer hit ratio คืออะไร
+
+Buffer hit ratio = สัดส่วนของการอ่านข้อมูลที่ PostgreSQL สามารถดึงได้จาก shared_buffers (หน่วยความจำ) แทนที่จะต้องไปอ่านจาก disk
+
 6. แสดงผลการคำนวณ การกำหนดค่าหน่วยความจำต่าง ๆ โดยอ้างอิงเครื่องของตนเอง
 7. การสแกนของฐานข้อมูล PostgreSQL มีกี่แบบอะไรบ้าง เปรียบเทียบการสแกนแต่ละแบบ
